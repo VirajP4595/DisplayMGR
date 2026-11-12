@@ -1,0 +1,150 @@
+<Window x:Class="DisplayMGR.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DisplayMGR" Width="400" SizeToContent="Height"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
+        FontFamily="Segoe UI" UseLayoutRounding="True">
+
+    <Border Margin="8" CornerRadius="10" Background="{StaticResource PanelBrush}"
+            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <DockPanel Margin="14,10,8,6">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Style="{StaticResource IconButton}" Content="Rescan" Command="{Binding RescanCommand}"
+                            ToolTip="Detect monitors again and re-read their features"/>
+                    <Button Style="{StaticResource IconButton}" Content="✕" Command="{Binding HidePanelCommand}"
+                            ToolTip="Hide to the tray"/>
+                </StackPanel>
+                <TextBlock Style="{StaticResource BodyText}" FontSize="15" FontWeight="SemiBold" Text="DisplayMGR"/>
+            </DockPanel>
+
+            <!-- Monitors -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="10,0">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SubText}" Margin="4,8" Text="Looking for monitors…"
+                               Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}"/>
+                    <TextBlock Style="{StaticResource SubText}" Margin="4,8" Text="No monitors were detected."
+                               Visibility="{Binding HasNoMonitors, Converter={StaticResource BoolToVisibility}}"/>
+
+                    <ItemsControl ItemsSource="{Binding Monitors}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource CardBrush}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="More"
+                                                    Command="{Binding ToggleExpandedCommand}"
+                                                    Visibility="{Binding SupportsVcp, Converter={StaticResource BoolToVisibility}}"
+                                                    ToolTip="Show every control this monitor offers"/>
+                                            <StackPanel>
+                                                <TextBlock Style="{StaticResource BodyText}" FontWeight="SemiBold" Text="{Binding Name}"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Style="{StaticResource SubText}" Text="{Binding Subtitle}"/>
+                                            </StackPanel>
+                                        </DockPanel>
+
+                                        <TextBlock Style="{StaticResource SubText}" Foreground="{StaticResource WarnBrush}"
+                                                   Margin="0,6,0,0" Text="{Binding Status}"
+                                                   Visibility="{Binding HasStatus, Converter={StaticResource BoolToVisibility}}"/>
+
+                                        <ContentControl Margin="0,6,0,0" Content="{Binding Brightness}" Focusable="False"
+                                                        ContentTemplate="{StaticResource SliderRowTemplate}"
+                                                        Visibility="{Binding HasBrightness, Converter={StaticResource BoolToVisibility}}"/>
+
+                                        <ContentControl Margin="0,8,0,0" Content="{Binding Inputs}" Focusable="False"
+                                                        ContentTemplate="{StaticResource OptionChipsTemplate}"
+                                                        Visibility="{Binding HasInputs, Converter={StaticResource BoolToVisibility}}"/>
+
+                                        <!-- Everything else -->
+                                        <StackPanel Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
+                                            <ItemsControl Margin="0,4,0,0" ItemsSource="{Binding ExtraSliders}"
+                                                          ItemTemplate="{StaticResource SliderRowTemplate}"/>
+
+                                            <CheckBox Style="{StaticResource DarkCheckBox}" Content="Mute speakers"
+                                                      IsChecked="{Binding IsMuted}"
+                                                      Visibility="{Binding HasMute, Converter={StaticResource BoolToVisibility}}"/>
+
+                                            <ItemsControl ItemsSource="{Binding OptionGroups}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,8,0,0">
+                                                            <TextBlock Style="{StaticResource SubText}" Margin="0,0,0,4" Text="{Binding Title}"/>
+                                                            <ContentControl Content="{Binding}" Focusable="False"
+                                                                            ContentTemplate="{StaticResource OptionChipsTemplate}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <WrapPanel Margin="0,10,0,0">
+                                                <Button Style="{StaticResource ChipButton}" Content="Standby" Command="{Binding StandbyCommand}"
+                                                        Visibility="{Binding HasPower, Converter={StaticResource BoolToVisibility}}"/>
+                                                <Button Style="{StaticResource ChipButton}" Content="Power off" Command="{Binding PowerOffCommand}"
+                                                        Visibility="{Binding HasPower, Converter={StaticResource BoolToVisibility}}"/>
+                                                <Button Style="{StaticResource ChipButton}" Content="Reset colour" Command="{Binding ColorResetCommand}"
+                                                        Visibility="{Binding HasColorReset, Converter={StaticResource BoolToVisibility}}"/>
+                                                <Button Style="{StaticResource ChipButton}" Content="Factory reset" Command="{Binding FactoryResetCommand}"
+                                                        Visibility="{Binding HasFactoryReset, Converter={StaticResource BoolToVisibility}}"/>
+                                            </WrapPanel>
+
+                                            <!-- Raw VCP access for features without a dedicated control -->
+                                            <TextBlock Style="{StaticResource SubText}" Margin="0,8,0,4"
+                                                       Text="Advanced: read or write any VCP code (code in hex)"/>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="54"/>
+                                                    <ColumnDefinition Width="6"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="6"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Style="{StaticResource DarkTextBox}" Text="{Binding RawCode, UpdateSourceTrigger=PropertyChanged}"
+                                                         ToolTip="VCP code in hex, e.g. 60"/>
+                                                <TextBox Grid.Column="2" Style="{StaticResource DarkTextBox}"
+                                                         Text="{Binding RawValue, UpdateSourceTrigger=PropertyChanged}"
+                                                         ToolTip="Value to write: decimal (17) or hex (0x11)"/>
+                                                <Button Grid.Column="4" Style="{StaticResource ChipButton}" Margin="0,0,6,0" Content="Read"
+                                                        Command="{Binding RawReadCommand}"/>
+                                                <Button Grid.Column="5" Style="{StaticResource ChipButton}" Margin="0" Content="Write"
+                                                        Command="{Binding RawWriteCommand}"/>
+                                            </Grid>
+                                            <TextBlock Style="{StaticResource SubText}" Margin="0,4,0,0" Text="{Binding RawResult}"/>
+
+                                            <TextBlock Style="{StaticResource SubText}" Margin="0,8,0,2" Text="Capabilities reported by the monitor"/>
+                                            <TextBox Style="{StaticResource DarkTextBox}" IsReadOnly="True" TextWrapping="Wrap"
+                                                     MaxHeight="70" VerticalScrollBarVisibility="Auto" FontSize="10.5"
+                                                     Text="{Binding CapabilitiesText, Mode=OneWay}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer -->
+            <DockPanel Grid.Row="2" Margin="14,2,8,8">
+                <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="Exit"
+                        Command="{Binding ExitCommand}" VerticalAlignment="Bottom"/>
+                <WrapPanel>
+                    <CheckBox Style="{StaticResource DarkCheckBox}" Content="Move in unison" IsChecked="{Binding Unison}"
+                              ToolTip="Changing one monitor's brightness sets the others to the same level"/>
+                    <CheckBox Style="{StaticResource DarkCheckBox}" Content="Desktop widget" IsChecked="{Binding WidgetVisible}"/>
+                    <CheckBox Style="{StaticResource DarkCheckBox}" Content="Keep open" IsChecked="{Binding KeepPanelOpen}"
+                              ToolTip="Do not hide this panel when you click elsewhere"/>
+                    <CheckBox Style="{StaticResource DarkCheckBox}" Content="Start with Windows" IsChecked="{Binding StartWithWindows}"/>
+                </WrapPanel>
+            </DockPanel>
+        </Grid>
+    </Border>
+</Window>

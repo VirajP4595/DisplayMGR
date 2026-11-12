@@ -1,0 +1,58 @@
+<Window x:Class="DisplayMGR.Views.WidgetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DisplayMGR widget" Width="290" SizeToContent="Height"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False"
+        FontFamily="Segoe UI" UseLayoutRounding="True">
+
+    <Border CornerRadius="12" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1" Padding="14,8,14,8">
+        <Border.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Open DisplayMGR" Command="{Binding ShowPanelCommand}"/>
+                <Separator/>
+                <MenuItem Header="Always on top" IsCheckable="True" IsChecked="{Binding WidgetTopmost}"/>
+                <MenuItem Header="Show input buttons" IsCheckable="True" IsChecked="{Binding WidgetShowInputs}"/>
+                <Separator/>
+                <MenuItem Header="Hide widget" Command="{Binding HideWidgetCommand}"/>
+            </ContextMenu>
+        </Border.ContextMenu>
+
+        <StackPanel>
+            <DockPanel Margin="0,0,-6,4">
+                <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="⋯" Padding="6,0"
+                        Command="{Binding ShowPanelCommand}" ToolTip="Open DisplayMGR (right-click the widget for options)"/>
+                <TextBlock Style="{StaticResource SubText}" FontWeight="SemiBold" Text="Displays"/>
+            </DockPanel>
+            <TextBlock Style="{StaticResource SubText}" Text="No monitors detected" Margin="0,0,0,4"
+                       Visibility="{Binding HasNoMonitors, Converter={StaticResource BoolToVisibility}}"/>
+
+            <ItemsControl ItemsSource="{Binding Monitors}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,0,0,6">
+                            <TextBlock Style="{StaticResource SubText}" Text="{Binding Name}" TextWrapping="NoWrap"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <Grid Visibility="{Binding HasBrightness, Converter={StaticResource BoolToVisibility}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="32"/>
+                                </Grid.ColumnDefinitions>
+                                <Slider Style="{StaticResource FlatSlider}" Maximum="{Binding Brightness.Maximum}"
+                                        Value="{Binding Brightness.Value, Mode=TwoWay}"/>
+                                <TextBlock Grid.Column="1" Style="{StaticResource BodyText}" HorizontalAlignment="Right"
+                                           Text="{Binding Brightness.Value, StringFormat={}{0:0}}"/>
+                            </Grid>
+                            <Grid Visibility="{Binding DataContext.WidgetShowInputs, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}">
+                                <ContentControl Margin="0,4,0,0" Content="{Binding Inputs}" Focusable="False"
+                                                ContentTemplate="{StaticResource OptionChipsTemplate}"
+                                                Visibility="{Binding HasInputs, Converter={StaticResource BoolToVisibility}}"/>
+                            </Grid>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </Border>
+</Window>
